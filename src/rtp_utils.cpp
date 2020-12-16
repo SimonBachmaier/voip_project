@@ -18,7 +18,7 @@ std::vector<uint8_t> RtpUtils::createRtpPacket(std::vector<uint8_t>& header, uin
 /**
 * Creates RTP header from passed arguments. Payload type is fixed at 99 for this application.
 */
-std::vector<uint8_t> RtpUtils::createRtpHeader(uint8_t numberOfChannels, uint16_t sequenceNumber, uint32_t timestamp, uint32_t ssrcId)
+std::vector<uint8_t> RtpUtils::createRtpHeader(uint8_t payloadType, uint16_t sequenceNumber, uint32_t timestamp, uint32_t ssrcId)
 {
 	const uint8_t numberOfHeaderBytes = 12;
 	std::vector<uint8_t> header(numberOfHeaderBytes, 0);
@@ -29,7 +29,7 @@ std::vector<uint8_t> RtpUtils::createRtpHeader(uint8_t numberOfChannels, uint16_
 	header[0] = header[0] | 0; // set csrc count cc: 0000 |0000|
 
 	header[1] = header[1] | 0; // set marker m: |0|000 0000
-	header[1] = header[1] | 99; // set payload type pt: 0|000 0000|
+	header[1] = header[1] | payloadType; // set payload type pt: 0|000 0000|
 
 	header[2] = sequenceNumber >> 8; // set first part of sequence number: |0000 0000
 	header[3] = (uint8_t) sequenceNumber; // set second part of sequence number: 0000 0000|
@@ -53,7 +53,8 @@ std::vector<uint8_t> RtpUtils::createRtpHeader(uint8_t numberOfChannels, uint16_
 */
 uint8_t RtpUtils::getPayloadType(std::vector<uint8_t>& header)
 {
-	if (header.size() >= 12) {
+	if (header.size() >= 12)
+	{
 		return header[1] & 127; // // gets payload type pt: 0|000 0000|
 	}
 	return 0;

@@ -11,6 +11,7 @@
 #include "rtp_utils.h"
 #include "udp_socket.h"
 #include "audio_buffer.h"
+#include "audio_mixer.h"
 #include "audio_decoder.h"
 #include "playout_buffer.h"
 
@@ -22,11 +23,12 @@ public:
 	PlayoutBuffer playoutBuffer;
 	std::mutex mtxPlayoutBuffer;
 
-	void start(std::string ip, std::string port, uint16_t sampleRate, uint8_t numberOfChannels, uint16_t frameSize);
+	void start(std::string ip, std::string port, uint16_t sampleRate, uint8_t numberOfChannels, uint16_t frameSize, bool isUsingOpus);
 	void stop();
 
 private:
 	bool isRunning_;
+	bool isUsingOpus_;
 	uint16_t frameSize_;
 	std::string port_;
 	uint16_t sampleRate_;

@@ -15,12 +15,13 @@
 class Sender {
 
 public:
-	void start(std::string ip, std::string port_, uint16_t sampleRate, uint8_t numberOfChannels);
+	void start(std::string ip, std::string port_, uint16_t sampleRate, uint8_t numberOfChannels, bool isUsingOpus);
 	void stop();
 	void send(AudioBuffer const input);
 
 private:
 	bool isRunning_ = false;
+	bool isUsingOpus_;
 	uint16_t nextSequenceNumber_;
 	uint32_t nextTimestamp_;
 	uint32_t ssrcId;

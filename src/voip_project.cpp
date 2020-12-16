@@ -7,9 +7,11 @@ VoipProject::VoipProject() : soundcardInteraction_(this), isRunning_(false) {}
 * Entry point of the voip project. 
 * Parses arguments, starts and stops the application on receiving an "enter" key 
 */
-int VoipProject::run(int argc, char* argv[]) {
+int VoipProject::run(int argc, char* argv[])
+{
     VoipProject::Options* options = new VoipProject::Options();
-    if (processArguments(argc, argv, options) == false) {
+    if (processArguments(argc, argv, options) == false)
+    {
         std::cerr << "Error processing arguments!" << std::endl;
         return -1;
     }
@@ -34,8 +36,8 @@ void VoipProject::start(VoipProject::Options* options)
     //receiver_.start(options->destinationIp, options->remotePort, options->sampleRate, options->numberOfOutputChannels, options->frameSize);
     //sender_.start(options->destinationIp, options->remotePort, options->sampleRate, options->numberOfInputChannels);
     // Set to 2 for testing
-    receiver_.start(options->destinationIp, options->remotePort, options->sampleRate, 2, options->frameSize);
-    sender_.start(options->destinationIp, options->remotePort, options->sampleRate, 2);
+    receiver_.start(options->destinationIp, options->remotePort, options->sampleRate, 2, options->frameSize, options->isUsingOpus);
+    sender_.start(options->destinationIp, options->remotePort, options->sampleRate, 2, options->isUsingOpus);
     soundcardInteraction_.start(); 
     isRunning_ = true;
 }
@@ -70,7 +72,8 @@ void VoipProject::stop()
 /**
 * Parses command line arguments and sets options.
 */
-bool VoipProject::processArguments(int argc, char *argv[], VoipProject::Options* options) {
+bool VoipProject::processArguments(int argc, char *argv[], VoipProject::Options* options)
+{
   try {
     TCLAP::CmdLine cmd("VoIP Project using Opus, RtAudio and Sockets", ' ', "0.1");
 
@@ -86,23 +89,27 @@ bool VoipProject::processArguments(int argc, char *argv[], VoipProject::Options*
     TCLAP::ValueArg<unsigned int> sampleRate("s", "samplerate", "Samplerate (default: 48000)", false, 48000, "unsigned int", cmd);
     TCLAP::ValueArg<std::string> remotePort("", "rPort", "Remote Port (default: 1976)", false, "1976", "std::string", cmd);
     TCLAP::ValueArg<std::string> localPort("", "lPort", "Local Port (default: 1976)", false, "1976", "std::string", cmd);
+    TCLAP::ValueArg<bool> isUsingOpus("", "useOpus", "useOpus encoding", false, true, "bool", cmd);
     TCLAP::UnlabeledValueArg<std::string> destinationIp("destIp", "Destination IP address", false, "127.0.0.1", "std::string", cmd);
 
     cmd.parse(argc, argv);
 
     /* Add argument processing here */
-    if (listDevices.getValue()) {
+    if (listDevices.getValue())
+    {
       this->listDevices();
       exit(0);
     }
 
     // if -l is not specified, the IP is mandatory
     // in order to establish an endpoint connection
-    if (destinationIp.getValue() == "") {
+    if (destinationIp.getValue() == "")
+    {
       TCLAP::StdOutput().usage(cmd);
       exit(-1);
     }
 
+    options->isUsingOpus = isUsingOpus.getValue();
     options->inputDevice = inputDevice.getValue();
     options->outputDevice = outputDevice.getValue();
     options->numberOfInputChannels = inputChannels.getValue();
@@ -113,7 +120,8 @@ bool VoipProject::processArguments(int argc, char *argv[], VoipProject::Options*
     options->localPort = localPort.getValue();
     options->destinationIp = destinationIp.getValue();
 
-  } catch (TCLAP::ArgException& argEx) {
+  } catch (TCLAP::ArgException& argEx)
+  {
     std::cerr << "Error parsing command line arguments: " << argEx.error() << " for argument " << argEx.argId() << std::endl;
     return false;
   }
@@ -124,14 +132,16 @@ bool VoipProject::processArguments(int argc, char *argv[], VoipProject::Options*
 /**
 * Prints list of audio devices conntected to this machine.
 */
-void VoipProject::listDevices() {
+void VoipProject::listDevices()
+{
     SoundcardInteraction::listDevices();
 }
 
 /**
 * Callback function used by RtAudio to get audio input or pass audio output
 */
-int VoipProject::process(AudioBuffer& output, AudioBuffer const& input) {
+int VoipProject::process(AudioBuffer& output, AudioBuffer const& input)
+{
     sender_.send(input);
     playNextFrame(output);
 

@@ -15,6 +15,7 @@
 class VoipProject : public SoundcardAudioProcessor {
 public:
 	struct Options {
+		bool isUsingOpus = true;
 		int inputDevice = 0;
 		int outputDevice = 0;
 		unsigned int numberOfInputChannels = 0;

@@ -4,10 +4,12 @@
 /**
 * Starts the sender object by starting the encoder and udp socket
 */
-void Sender::start(std::string destinationIp, std::string destinationPort, uint16_t sampleRate, uint8_t numberOfChannels) {
+void Sender::start(std::string destinationIp, std::string destinationPort, uint16_t sampleRate, uint8_t numberOfChannels, bool isUsingOpus)
+{
     if (isRunning_) return;
 
     isRunning_ = true;
+    isUsingOpus_ = isUsingOpus;
     encoder_.start(sampleRate, numberOfChannels);
     socket_.setAddress(destinationIp, destinationPort);
     socket_.open();
@@ -20,7 +22,8 @@ void Sender::start(std::string destinationIp, std::string destinationPort, uint1
 /**
 * Stops the sender object by closing socket an stopping the encoder
 */
-void Sender::stop() {
+void Sender::stop()
+{
     if (isRunning_ == false) return;
 
     isRunning_ = false;
@@ -31,20 +34,35 @@ void Sender::stop() {
 /**
 * Sends the passed raw audio buffer after encoding it and packing it in RTP packet over the network
 */
-void Sender::send(AudioBuffer const input) {
+void Sender::send(AudioBuffer const input)
+{
     if (isRunning_ == false) return;
 
     AudioBuffer::Options options = input.getOptions();
 
-    uint8_t* encodedDataBuffer = new uint8_t[input.size() * 2];
-    int32_t encodedDataSize = encodeData(options, input, encodedDataBuffer);
-    if (encodedDataSize == -99) return;
+    std::vector<uint8_t> header;
+    std::vector<uint8_t> data;
+    int32_t payloadSize;
 
-    std::vector<uint8_t> header = RtpUtils::createRtpHeader(options.numberOfChannels, ssrcId, nextSequenceNumber_, (uint16_t) nextTimestamp_);
-    std::vector<uint8_t> data = RtpUtils::createRtpPacket(header, encodedDataBuffer, encodedDataSize);
+    if (isUsingOpus_ == true)
+    {
+
+        uint8_t* encodedDataBuffer = new uint8_t[input.size() * 2];
+        payloadSize = encodeData(options, input, encodedDataBuffer);
+        if (payloadSize == -99) return;
+
+        header = RtpUtils::createRtpHeader(99, ssrcId, nextSequenceNumber_, (uint16_t)nextTimestamp_);
+        data = RtpUtils::createRtpPacket(header, encodedDataBuffer, payloadSize);
+    }
+    else {
+        uint8_t payloadType = options.numberOfChannels == 1 ? 18 : 19;
+        header = RtpUtils::createRtpHeader(payloadType, ssrcId, nextSequenceNumber_, (uint16_t)nextTimestamp_);
+        data = RtpUtils::createRtpPacket(header, (uint8_t *)input.data(), input.size());
+        payloadSize = input.size();
+    }
 
     uint32_t bytesSent = socket_.send(data);
-    std::cout << "Sent RTP packet. Packet size: " << bytesSent << " bytes. Encoded payload size: " << encodedDataSize << " bytes." << std::endl;
+    std::cout << "Sent RTP packet. Packet size: " << bytesSent << " bytes. Payload size: " << payloadSize << " bytes." << std::endl;
 
     nextTimestamp_ += input.numberOfSamples();
     nextSequenceNumber_++;

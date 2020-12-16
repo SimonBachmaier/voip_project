@@ -25,7 +25,8 @@ void AudioEncoder::start(uint16_t sampleRate, uint8_t numberOfChannels)
 */
 int32_t AudioEncoder::encodeFloat(const uint8_t* input, uint16_t frameSize, uint8_t* output, uint32_t maxSize)
 {
-	if (isRunning_) {
+	if (isRunning_)
+	{
 		return opus_encode_float(encoder_, (float*)input, frameSize, output, maxSize);
 	}
 	return 0;

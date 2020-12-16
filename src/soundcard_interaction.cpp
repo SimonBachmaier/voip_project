@@ -92,7 +92,8 @@ void SoundcardInteraction::openStream(bool& errorFlag)
     try {
         rtAudio_.openStream(&outputParameters_, &inputParameters_, rtaudiofmt, options_.sampleRate, &expectedFramesize, rtAudioCallback, static_cast<void*>(this));
     }
-    catch (RtAudioError& e) {
+    catch (RtAudioError& e)
+    {
         std::cerr << "Error initializing!" << std::endl;
         e.printMessage();
         errorFlag = true;
@@ -108,7 +109,8 @@ RtAudioFormat SoundcardInteraction::getRtAudioFormat(bool& errorFlag)
 {
     RtAudioFormat rtaudiofmt = RTAUDIO_SINT16;
 
-    switch (options_.sampleFormat) {
+    switch (options_.sampleFormat)
+    {
     case AudioBuffer::SampleFormat::INT16 :
         // default value
         break;
@@ -129,7 +131,8 @@ RtAudioFormat SoundcardInteraction::getRtAudioFormat(bool& errorFlag)
 */
 void SoundcardInteraction::adjustForFramesizeDifference(unsigned int expectedFramesize)
 {
-    if (expectedFramesize != options_.frameSize) {
+    if (expectedFramesize != options_.frameSize)
+    {
         std::cerr << "Warning: requested framesize differs from actual framesize ";
         std::cerr << "(Requested: " << options_.frameSize << " Actual: " << expectedFramesize << ")!" << std::endl;
         std::cerr << "Adjusting framesize to " << expectedFramesize << std::endl;
@@ -165,14 +168,16 @@ int SoundcardInteraction::processRtAudioCallback(void* outBuf, void* inBuf, unsi
 /**
 * Starts the already opened RtAudio stream
 */
-bool SoundcardInteraction::start() {
+bool SoundcardInteraction::start()
+{
     if (initialized_ == false)
         return false;
 
     try {
         rtAudio_.startStream();
     }
-    catch (RtAudioError& e) {
+    catch (RtAudioError& e)
+    {
         std::cerr << "Error starting stream!" << std::endl;
         e.printMessage();
         return false;
@@ -185,18 +190,22 @@ bool SoundcardInteraction::start() {
 /**
 * Stops and closes current RtAudio stream if it is opened
 */
-bool SoundcardInteraction::stop() {
+bool SoundcardInteraction::stop()
+{
     if (isRunning_ == false)
         return false;
 
-    try {
+    try
+    {
         rtAudio_.stopStream();
-        if (rtAudio_.isStreamOpen()) {
+        if (rtAudio_.isStreamOpen())
+        {
             rtAudio_.closeStream();
             initialized_ = false;
         }
     }
-    catch (RtAudioError& e) {
+    catch (RtAudioError& e)
+    {
         std::cerr << "Error stopping stream!" << std::endl;
         e.printMessage();
     }
@@ -216,7 +225,8 @@ SoundcardInteraction::Options SoundcardInteraction::getOptions()
 /**
 * Helper function used in list devices to display the supported sample formats
 */
-static std::string supportedSampleTypes(RtAudio::DeviceInfo const& info) {
+static std::string supportedSampleTypes(RtAudio::DeviceInfo const& info)
+{
     std::stringstream s;
     s << ((info.nativeFormats & RTAUDIO_SINT8) ? "SINT8 " : "");
     s << ((info.nativeFormats & RTAUDIO_SINT16) ? "SINT16 " : "");
@@ -229,7 +239,8 @@ static std::string supportedSampleTypes(RtAudio::DeviceInfo const& info) {
 /**
 * Prints all audio devices on this machine.
 */
-void SoundcardInteraction::listDevices() {
+void SoundcardInteraction::listDevices()
+{
     RtAudio audio;
 
     // Disable display of warning messages
@@ -238,9 +249,11 @@ void SoundcardInteraction::listDevices() {
     const unsigned int nDevs = audio.getDeviceCount();
 
     RtAudio::DeviceInfo info;
-    for (unsigned int i = 0; i < nDevs; ++i) {
+    for (unsigned int i = 0; i < nDevs; ++i)
+    {
         info = audio.getDeviceInfo(i);
-        if (info.probed) {
+        if (info.probed)
+        {
             std::cerr << std::endl;
             std::cerr << "************************************************************" << std::endl;
             std::cerr << "Device ID = " << i << std::endl;
@@ -248,7 +261,8 @@ void SoundcardInteraction::listDevices() {
             std::cerr << "Supported Channels (in/out/duplex) = ";
             std::cerr << info.inputChannels << "/" << info.outputChannels << "/" << info.duplexChannels << std::endl;
             std::cerr << "Native sample rates = ";
-            for (unsigned int i = 0; i < info.sampleRates.size(); ++i) {
+            for (unsigned int i = 0; i < info.sampleRates.size(); ++i)
+            {
                 std::cerr << info.sampleRates[i] << "Hz" << (i == info.sampleRates.size() - 1 ? " " : ", ");
             }
             std::cerr << std::endl;

@@ -4,6 +4,7 @@
 Receiver::Receiver()
   : self_(),
     isRunning_(true),
+    isUsingOpus_(true),
     senderIds_(),
     playoutBuffer(PlayoutBuffer(100)),
     frameSize_(),
@@ -11,8 +12,10 @@ Receiver::Receiver()
     numberOfChannels_()
 {}
 
-Receiver::~Receiver() {
-  if (isRunning_) {
+Receiver::~Receiver()
+{
+  if (isRunning_)
+  {
     stop();
   }
 }
@@ -20,14 +23,17 @@ Receiver::~Receiver() {
 /**
 * Starts the receiver thread
 */
-void Receiver::start(std::string ip, std::string port, uint16_t sampleRate, uint8_t numberOfChannels, uint16_t frameSize) {
+void Receiver::start(std::string ip, std::string port, uint16_t sampleRate, uint8_t numberOfChannels, uint16_t frameSize, bool isUsingOpus)
+{
+    isUsingOpus_ = isUsingOpus;
     self_ = std::thread([=] { receive(ip, port, sampleRate, numberOfChannels, frameSize); });
 }
 
 /**
 * Stops the receiver and waits for the receiver thread to stop
 */
-void Receiver::stop() {
+void Receiver::stop()
+{
   isRunning_ = false;
   self_.join();
 }
@@ -35,20 +41,24 @@ void Receiver::stop() {
 /**
 * Checks the receiver socket continuously for incoming messages
 */
-void Receiver::receive(std::string ip, std::string port, uint16_t sampleRate, uint8_t numberOfChannels, uint16_t frameSize) {
+void Receiver::receive(std::string ip, std::string port, uint16_t sampleRate, uint8_t numberOfChannels, uint16_t frameSize)
+{
     static bool once = true;
 
-    while (isRunning_) {
-        if (once) {
+    while (isRunning_)
+    {
+        if (once)
+        {
             once = false;
             initializeReceiver(ip, port, sampleRate, numberOfChannels, frameSize);
         }
 
-        uint16_t maxSize = 1024;
+        uint16_t maxSize = 4096 + 1024;
         std::vector<uint8_t> packet(maxSize, 0);
         uint32_t bytesReceived = socket_.receive(packet, maxSize);
 
-        if (bytesReceived > 12) {
+        if (bytesReceived > 12)
+        {
             std::vector<uint8_t> header, payload;
             RtpUtils::unpackRtpPacket(packet, header, payload);
             std::cout << "Received RTP packet. Packet size: " << packet.size() << " bytes. ";
@@ -88,6 +98,49 @@ void Receiver::handlePayload(const uint8_t& payloadType, std::vector<uint8_t>& p
 
         uint8_t* decodedPayload = new uint8_t[audioBuffer.size()];
         decoder_.decodeFloat(payload, options.frameSize, audioBuffer.data());
+
+        playoutBuffer.add(audioBuffer);
+    }
+    else if (payloadType == 18)
+    {
+        AudioBuffer::Options options;
+        options.sampleFormat = AudioBuffer::SampleFormat::FLOAT32;
+        options.sampleRate = sampleRate_;
+        options.frameSize = frameSize_;
+        options.numberOfChannels = numberOfChannels_;
+        AudioBuffer audioBuffer(options);
+
+        if (numberOfChannels_ == 2)
+        {
+            float* stereoAudio = AudioMixer::createInterleavedAudioBuffer(frameSize_, (float*)&payload[0], payload.size());
+            memcpy(audioBuffer.data(), stereoAudio, payload.size());
+        }
+        else
+        {
+            memcpy(audioBuffer.data(), &payload[0], payload.size());
+        }
+
+        playoutBuffer.add(audioBuffer);
+    }
+    else if (payloadType == 19)
+    {
+        AudioBuffer::Options options;
+        options.sampleFormat = AudioBuffer::SampleFormat::FLOAT32;
+        options.sampleRate = sampleRate_;
+        options.frameSize = frameSize_;
+        options.numberOfChannels = numberOfChannels_;
+        AudioBuffer audioBuffer(options);
+
+
+        if (numberOfChannels_ == 1)
+        {
+            float* monoAudio = AudioMixer::createDeinterleavedAudioBuffer(frameSize_, (float*)&payload[0], payload.size());
+            memcpy(audioBuffer.data(), monoAudio, payload.size());
+        }
+        else
+        {
+            memcpy(audioBuffer.data(), &payload[0], payload.size());
+        }
 
         playoutBuffer.add(audioBuffer);
     }

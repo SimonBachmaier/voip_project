@@ -5,7 +5,8 @@ SimpleWindowsUpdSocket::SimpleWindowsUpdSocket() : connectSocket_(INVALID_SOCKET
 {
     WSADATA wsaData;
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult != 0) {
+    if (iResult != 0)
+    {
         std::cerr << "WSAStartup failed: " << iResult << std::endl;
     }
 }
@@ -26,11 +27,13 @@ void SimpleWindowsUpdSocket::setAddress(std::string address, std::string port)
     hints.ai_protocol = IPPROTO_UDP;
 
     int iResult = getaddrinfo(address.c_str(), port.c_str(), &hints, &addressInfo_);
-    if (iResult != 0) {
+    if (iResult != 0)
+    {
         std::cerr << "getaddrinfo failed failed: " << iResult << std::endl;
         WSACleanup();
     }
-    else {
+    else
+    {
         if (addressInfo_->ai_canonname)
             std::cerr << "Canonical name of socket: " << addressInfo_->ai_canonname << std::endl;
 
@@ -59,7 +62,8 @@ void SimpleWindowsUpdSocket::open()
     FD_ZERO(&socketArray_);
     FD_SET(connectSocket_, &socketArray_);
 
-    if (connectSocket_ == INVALID_SOCKET) {
+    if (connectSocket_ == INVALID_SOCKET)
+    {
         std::cerr << "Error at socket(): " << WSAGetLastError() << std::endl;
         freeaddrinfo(addressInfo_);
         WSACleanup();
@@ -68,7 +72,8 @@ void SimpleWindowsUpdSocket::open()
     isOpen_ = true;
 
     int32_t reuseaddr = 1;
-    if (::setsockopt(connectSocket_, SOL_SOCKET, SO_REUSEADDR, (char*)&reuseaddr, sizeof(reuseaddr))) {
+    if (::setsockopt(connectSocket_, SOL_SOCKET, SO_REUSEADDR, (char*)&reuseaddr, sizeof(reuseaddr)))
+    {
         std::cerr << "Error setting reuse option on socket!" << std::endl;
     }
 }
@@ -92,9 +97,11 @@ uint32_t SimpleWindowsUpdSocket::send(std::vector<uint8_t> data, bool isBlocking
     if (isOpen_ == false) return 0;
 
     u_long nonblocking = 0;
-    if (isBlocking == false) {
+    if (isBlocking == false)
+    {
         nonblocking = 1;
-        if (ioctlsocket(connectSocket_, FIONBIO, &nonblocking) != 0) {
+        if (ioctlsocket(connectSocket_, FIONBIO, &nonblocking) != 0)
+        {
             std::cerr << "Could not set non-blocking mode on socket!" << std::endl;
         }
     }
@@ -104,14 +111,17 @@ uint32_t SimpleWindowsUpdSocket::send(std::vector<uint8_t> data, bool isBlocking
 
 
     int32_t bytes_sent = ::sendto(connectSocket_, (char*) &data[0], (int) data.size(), 0, address, sizeof(sockaddr_in));
-    if (bytes_sent == -1) {
+    if (bytes_sent == -1)
+    {
         int e = WSAGetLastError();
         std::cerr << "Error in sendto: " << e << std::endl;
     }
 
-    if (isBlocking == false) {
+    if (isBlocking == false)
+    {
         nonblocking = 0;
-        if (ioctlsocket(connectSocket_, FIONBIO, &nonblocking) != 0) {
+        if (ioctlsocket(connectSocket_, FIONBIO, &nonblocking) != 0)
+        {
             std::cerr << "Could not set blocking mode on socket!" << std::endl;
         }
     }
@@ -122,8 +132,10 @@ uint32_t SimpleWindowsUpdSocket::send(std::vector<uint8_t> data, bool isBlocking
 /**
 * Binds the previously set address as own address to prepare socket for incoming messages.
 */
-bool SimpleWindowsUpdSocket::bind() {
-    if (isOpen_ == false) {
+bool SimpleWindowsUpdSocket::bind()
+{
+    if (isOpen_ == false)
+    {
         std::cerr << "Error: trying to bind a non open socket!" << std::endl;
         return false;
     }
@@ -131,7 +143,8 @@ bool SimpleWindowsUpdSocket::bind() {
     struct sockaddr* address = nullptr;
     address = (struct sockaddr*)addressInfo_->ai_addr;
 
-    if (::bind(connectSocket_, address, sizeof(sockaddr_in)) != 0) {
+    if (::bind(connectSocket_, address, sizeof(sockaddr_in)) != 0)
+    {
         int e = WSAGetLastError();
         std::cerr << "Error binding socket: " << e << std::endl;
         return false;
@@ -159,15 +172,18 @@ uint32_t SimpleWindowsUpdSocket::receive(std::vector<uint8_t>& data, uint32_t ma
     a_len = sizeof(sockaddr_in);
 
     u_long nonblocking = 0;
-    if (isBlocking == false) {
+    if (isBlocking == false)
+    {
         nonblocking = 1;
-        if (ioctlsocket(connectSocket_, FIONBIO, &nonblocking) != 0) {
+        if (ioctlsocket(connectSocket_, FIONBIO, &nonblocking) != 0)
+        {
             std::cerr << "Could not set non-blocking mode on socket!" << std::endl;
         }
     }
 
     uint32_t toread = maxSize ? maxSize : (uint32_t) data.capacity();
-    if (maxSize > data.capacity()) {
+    if (maxSize > data.capacity())
+    {
         std::cerr << "Data to read over buffer capacity!" << std::endl;
         return 0;
     }
@@ -181,15 +197,18 @@ uint32_t SimpleWindowsUpdSocket::receive(std::vector<uint8_t>& data, uint32_t ma
     int32_t read_bytes = ::recvfrom(connectSocket_, (char*)&data[0], toread, 0, a, &a_len);
 
     int32_t e = WSAGetLastError();
-    if (read_bytes == -1 || read_bytes == 0) {
+    if (read_bytes == -1 || read_bytes == 0)
+    {
         std::cerr << "Error in recvfrom: " << e << std::endl;
         data.clear();
         return 0;
     }
 
-    if (isBlocking == false) {
+    if (isBlocking == false)
+    {
         nonblocking = 0;
-        if (ioctlsocket(connectSocket_, FIONBIO, &nonblocking) != 0) {
+        if (ioctlsocket(connectSocket_, FIONBIO, &nonblocking) != 0)
+        {
             std::cerr << "Could not set blocking mode on socket!" << std::endl;
         }
     }
