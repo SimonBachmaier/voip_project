@@ -3,6 +3,7 @@
 #define VOIP_PLAYOUT_BUFFER_H_
 
 #include "audio_buffer.h"
+#include <cstring>
 
 class PlayoutBuffer {
 public:

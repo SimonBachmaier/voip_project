@@ -19,7 +19,7 @@ set( SRC main.cpp
 # Windows only
 set( WIN_SRC windows_udp_socket.cpp )
 # TODO Linux / OSX only
-# set( UNIX_SRC unix_udp_socket.cpp )
+set( UNIX_SRC unix_udp_socket.cpp )
 
 set( HDR voip_project.h
          audio_buffer.h
@@ -35,8 +35,8 @@ set( HDR voip_project.h
 
 if( ${CMAKE_SYSTEM_NAME} STREQUAL Windows )
   list( APPEND SRC ${WIN_SRC} )
-#else()
-#  list( APPEND SRC ${UNIX_SRC} )
+else()
+ list( APPEND SRC ${UNIX_SRC} )
 endif()
 
 set( EXECUTABLE_NAME voip_project)

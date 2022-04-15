@@ -2,6 +2,8 @@
 #ifndef VOIP_RECEIVER_H
 #define VOIP_RECEIVER_H
 
+#include <algorithm>
+#include <cstring>
 #include <string>
 #include <thread>
 #include <iostream>
