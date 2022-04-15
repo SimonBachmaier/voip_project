@@ -3,6 +3,7 @@
 #define VOIP_AUDIO_MIXER_H_
 
 #include <cstdint>
+#include <cstdlib>
 
 class AudioMixer
 {

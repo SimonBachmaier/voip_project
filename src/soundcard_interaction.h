@@ -5,6 +5,7 @@
 #include "RtAudio.h"
 
 #include "audio_buffer.h"
+#include <cstring>
 
 // TODO after AudioBuffer is coded
 class SoundcardAudioProcessor {
